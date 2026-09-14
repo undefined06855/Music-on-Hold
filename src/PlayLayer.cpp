@@ -8,8 +8,12 @@ MusicInfo MusicInfo::save(FMOD::Channel* channel) {
 }
 
 void MusicInfo::load(FMOD::Channel* channel) {
-    channel->setPosition(this->offset, FMOD_TIMEUNIT_MS);
     channel->setLoopCount(this->loopCount);
+
+    // don't need to set position for looping songs, assume they don't need to sync
+    if (this->loopCount != -1) {
+        channel->setPosition(this->offset, FMOD_TIMEUNIT_MS);
+    }
 }
 
 void HookedPlayLayer::pauseGame(bool unfocused) {
