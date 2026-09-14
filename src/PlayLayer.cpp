@@ -1,5 +1,17 @@
 #include "PlayLayer.hpp"
 
+MusicInfo MusicInfo::save(FMOD::Channel* channel) {
+    MusicInfo ret;
+    channel->getPosition(&ret.offset, FMOD_TIMEUNIT_MS);
+    channel->getLoopCount(&ret.loopCount);
+    return ret;
+}
+
+void MusicInfo::load(FMOD::Channel* channel) {
+    channel->setPosition(this->offset, FMOD_TIMEUNIT_MS);
+    channel->setLoopCount(this->loopCount);
+}
+
 void HookedPlayLayer::pauseGame(bool unfocused) {
     auto fields = m_fields.self();
     auto engine = FMODAudioEngine::get();
@@ -9,7 +21,8 @@ void HookedPlayLayer::pauseGame(bool unfocused) {
 
     for (auto& [ id, music ] : engine->m_fmodMusic) {
         auto channel = engine->channelForChannelID(music.m_channelID);
-        channel->getPosition(&fields->m_musicOffsets[id], FMOD_TIMEUNIT_MS);
+        fields->m_musicInfo[id] = MusicInfo::save(channel);
+
         channel->setLoopCount(-1);
 
         FMOD::DSP* dsp;
@@ -34,8 +47,7 @@ void HookedPlayLayer::resume() {
 
     for (auto& [ id, music ] : engine->m_fmodMusic) {
         auto channel = engine->channelForChannelID(music.m_channelID);
-        channel->setPosition(fields->m_musicOffsets.at(id), FMOD_TIMEUNIT_MS);
-        channel->setLoopCount(0);
+        fields->m_musicInfo.at(id).load(channel);
 
         FMOD::DSP* dsp;
         channel->getDSP(FMOD_CHANNELCONTROL_DSP_HEAD, &dsp);
@@ -47,7 +59,7 @@ void HookedPlayLayer::resume() {
         dsp->release();
     }
 
-    fields->m_musicOffsets.clear();
+    fields->m_musicInfo.clear();
 
     PlayLayer::resume();
 }
