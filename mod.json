@@ -47,5 +47,9 @@
                 "slider-step": 1
             }
         }
+    },
+
+    "incompatibilities": {
+        "raydeeux.pausemenuloop": "v1.0.0"
     }
 }
